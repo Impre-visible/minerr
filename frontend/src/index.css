@@ -126,3 +126,8 @@ div[data-radix-popper-content-wrapper] {
     @apply bg-background text-foreground;
   }
 }
+
+
+button {
+  @apply cursor-pointer;
+}

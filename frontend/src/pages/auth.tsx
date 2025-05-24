@@ -18,6 +18,7 @@ import { Input } from "@/components/ui/input"
 import { usePost } from "@/hooks/use-post";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { useNavigate } from "react-router";
 
 const PASSWORD_REGEX = /^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$ %^&*-_]).{8,}$/;
 
@@ -43,6 +44,8 @@ export default function Auth() {
     const { execute: executeLogin, isLoading: isLoadingLogin } = usePost("/auth/login")
     const { execute: executeRegister, isLoading: isLoadingRegister } = usePost("/auth/register")
 
+    const navigate = useNavigate();
+
     const loginForm = useForm({
         resolver: zodResolver(loginSchema),
         defaultValues: {
@@ -64,7 +67,9 @@ export default function Auth() {
         executeLogin(data)
             .then((response) => {
                 if (!response.error) {
-                    console.log("Login successful:", response);
+                    localStorage.setItem('token', response.access_token);
+                    localStorage.setItem('refreshToken', response.refresh_token);
+                    navigate("/", { replace: true });
                 } else {
                     toast.error("Login failed", {
                         description: response.message || "An error occurred during login.",

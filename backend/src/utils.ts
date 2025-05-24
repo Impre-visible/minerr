@@ -2,7 +2,8 @@ import { networkInterfaces } from 'os';
 import { execSync } from 'child_process';
 import * as crypto from 'crypto';
 
-export function getJWTSecret(): string {
+// Génère le secret une seule fois au chargement du module
+const JWT_SECRET = (() => {
     const nets = networkInterfaces();
     const ipAddresses = Object.values(nets)
         .flat()
@@ -28,4 +29,8 @@ export function getJWTSecret(): string {
 
     const serverInfoString = JSON.stringify(serverInfo);
     return crypto.createHash('sha256').update(serverInfoString).digest('hex');
+})();
+
+export function getJWTSecret(): string {
+    return JWT_SECRET;
 }

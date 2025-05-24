@@ -3,6 +3,8 @@ import { Request, Response, NextFunction } from 'express';
 import * as jwt from 'jsonwebtoken';
 import { getJWTSecret } from 'src/utils';
 
+const JWT_SECRET = getJWTSecret();
+
 @Injectable()
 export class JwtMiddleware implements NestMiddleware {
 
@@ -25,7 +27,7 @@ export class JwtMiddleware implements NestMiddleware {
         }
 
         try {
-            const decoded = jwt.verify(token, getJWTSecret());
+            const decoded = jwt.verify(token, JWT_SECRET);
             req['user'] = decoded;
             next();
         } catch (error) {

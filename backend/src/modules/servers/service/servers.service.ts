@@ -19,14 +19,59 @@ export class ServersService {
         }
     }
 
+    private versionToTag(version: string): string {
+        const versionParts = version.split('.');
+        if (versionParts.length >= 2) {
+            version = `${versionParts[0]}.${versionParts[1]}`;
+        }
+        const minecraftJavaVersions: Record<string, string> = {
+            "1.1": "java8-jdk",
+            "1.2": "java8-jdk",
+            "1.3": "java8-jdk",
+            "1.4": "java8-jdk",
+            "1.5": "java8-jdk",
+            "1.6": "java8-jdk",
+            "1.7": "java8-jdk",
+            "1.8": "java8-jdk",
+            "1.9": "java8-jdk",
+            "1.10": "java8-jdk",
+            "1.11": "java8-jdk",
+            "1.12": "java8-jdk",
+            "1.13": "java8-jdk",
+            "1.14": "java8-jdk",
+            "1.15": "java8-jdk",
+            "1.16": "java8-jdk",
+            "1.17": "java16-openj9",
+            "1.18": "java17",
+            "1.19": "java17",
+            "1.20": "java17",
+            "1.21": "java17",
+        }
+
+        return minecraftJavaVersions[version] || 'java17'; // Default to java17 if version is not found
+    }
+
     async createServer(createServerDto: CreateServerDto): Promise<dockerode.ContainerInspectInfo> {
+
+        const imageTag = this.versionToTag(createServerDto.version);
+
+        const imageName = `itzg/minecraft-server:${imageTag}`;
+        const images = await this.docker.listImages();
+        const imageExists = images.some(image => image.RepoTags && image.RepoTags.includes(imageName));
+        if (!imageExists) {
+            await this.docker.pull(imageName);
+        }
+
+
         let envs: string[] = []
         envs.push('EULA=TRUE');
         envs.push(`TYPE=${createServerDto.type}`);
         envs.push(`VERSION=${createServerDto.version}`);
         envs.push(`MEMORY=${createServerDto.memory}M`);
+        envs.push(`FETCH_TLS_HANDSHAKE_TIMEOUT=PT120S`); // 120 seconds timeout for TLS handshake
+        envs.push(`ENABLE_AUTOPAUSE=true`);
 
-        if (createServerDto.type === 'CURSEFORGE') {
+        if (createServerDto.type === 'AUTO_CURSEFORGE') {
             envs.push(`CF_API_KEY=${createServerDto.cf_api_key}`);
             envs.push(`CF_PAGE_URL=${createServerDto.cf_modpack_url}`);
         }
@@ -34,7 +79,7 @@ export class ServersService {
         try {
             let name = 'minecraft-server-' + Date.now();
             const container = await this.docker.createContainer({
-                Image: 'docker.io/itzg/minecraft-server', // Image pulled from Docker Hub
+                Image: 'docker.io/' + imageName,
                 name,
                 Env: envs,
                 Tty: true,

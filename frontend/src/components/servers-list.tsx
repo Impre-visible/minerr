@@ -3,7 +3,7 @@ import dockerode from "dockerode";
 import { Card, CardContent, CardFooter, CardHeader } from "./ui/card";
 import { Tooltip, TooltipTrigger, TooltipContent } from "./ui/tooltip";
 import { Button } from "./ui/button";
-import { PauseIcon, PlayIcon, RotateCcwIcon, Trash2Icon } from "lucide-react";
+import { LogsIcon, PauseIcon, PlayIcon, RotateCcwIcon, Trash2Icon } from "lucide-react";
 import { usePost } from "@/hooks/use-post";
 import { useEffect } from "react";
 
@@ -34,7 +34,7 @@ function ActionButton({ icon: Icon, onClick, text, disabled }: { icon: React.Com
 }
 
 function ServerItem({ server, refreshServers }: { server: dockerode.ContainerInspectInfo, refreshServers: () => void }) {
-    const { execute, data } = usePost(`/servers/${server.Id}/action`);
+    const { execute, data, isLoading } = usePost(`/servers/${server.Id}/action`);
 
     const statusColors: Record<string, string> = {
         running: "bg-green-300 text-green-800",
@@ -47,7 +47,7 @@ function ServerItem({ server, refreshServers }: { server: dockerode.ContainerIns
 
     const types: Record<string, string> = {
         "VANILLA": "Vanilla",
-        "CURSEFORGE": "CurseForge",
+        "AUTO_CURSEFORGE": "CurseForge",
     };
 
     const getEnvValue = (env: string, defaultValue: string) => {
@@ -92,36 +92,44 @@ function ServerItem({ server, refreshServers }: { server: dockerode.ContainerIns
                 </Tooltip>
             </CardHeader>
             <CardContent className="grid grid-cols-2 gap-2">
-                <p className="text-sm">Port: {Object.keys(server.Config.ExposedPorts).length > 0 ? Object.keys(server.Config.ExposedPorts)[0] : "N/A"}</p>
+                <p className="text-sm">Port: {server.HostConfig.PortBindings['25565/tcp'][0].HostPort}</p>
                 <p className="text-sm">Type: {types[getEnvValue('TYPE', '')]}</p>
                 <p className="text-sm">Version: {getEnvValue('VERSION', 'N/A')}</p>
                 <p className="text-sm">Memory Limit: {formatMemory(getEnvValue('MEMORY', 'N/A'))}</p>
             </CardContent>
             <CardFooter className="flex justify-between items-center">
-                <div className="flex gap-2">
+                <div className="w-full flex justify-between items-center">
+                    <section className="flex gap-2">
+                        <ActionButton
+                            icon={PlayIcon}
+                            onClick={() => handleAction('start')}
+                            disabled={server.State.Status === "running" || isLoading}
+                            text="Start"
+                        />
+                        <ActionButton
+                            icon={PauseIcon}
+                            onClick={() => handleAction('pause')}
+                            disabled={server.State.Status !== "running" || isLoading}
+                            text="Pause"
+                        />
+                        <ActionButton
+                            icon={RotateCcwIcon}
+                            onClick={() => handleAction('restart')}
+                            disabled={server.State.Status === "restarting" || isLoading}
+                            text="Restart"
+                        />
+                        <ActionButton
+                            icon={Trash2Icon}
+                            onClick={() => handleAction('delete')}
+                            disabled={server.State.Status === "running" || isLoading}
+                            text="Delete"
+                        />
+                    </section>
                     <ActionButton
-                        icon={PlayIcon}
-                        onClick={() => handleAction('start')}
-                        disabled={server.State.Status === "running"}
-                        text="Start"
-                    />
-                    <ActionButton
-                        icon={PauseIcon}
-                        onClick={() => handleAction('pause')}
-                        disabled={server.State.Status !== "running"}
-                        text="Pause"
-                    />
-                    <ActionButton
-                        icon={RotateCcwIcon}
-                        onClick={() => handleAction('restart')}
-                        disabled={server.State.Status === "restarting"}
-                        text="Restart"
-                    />
-                    <ActionButton
-                        icon={Trash2Icon}
-                        onClick={() => handleAction('delete')}
-                        disabled={server.State.Status === "running"}
-                        text="Delete"
+                        icon={LogsIcon}
+                        onClick={() => console.log("Delete action not implemented yet")}
+                        disabled={false}
+                        text="Logs"
                     />
                 </div>
             </CardFooter>

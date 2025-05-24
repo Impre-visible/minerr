@@ -33,7 +33,7 @@ const formSchema = z.object({
     cf_api_key: z.string().optional().nullable(),
     cf_modpack_url: z.string().optional().nullable()
 }).superRefine((data, ctx) => {
-    if (data.type === "CURSEFORGE") {
+    if (data.type === "AUTO_CURSEFORGE") {
         if (!data.cf_api_key || !data.cf_modpack_url) {
             ctx.addIssue({
                 code: z.ZodIssueCode.custom,
@@ -148,7 +148,7 @@ export default function CreateServer() {
                                             </FormControl>
                                             <SelectContent>
                                                 <SelectItem value="VANILLA">Vanilla</SelectItem>
-                                                <SelectItem value="CURSEFORGE">CurseForge</SelectItem>
+                                                <SelectItem value="AUTO_CURSEFORGE">CurseForge</SelectItem>
                                             </SelectContent>
                                         </Select>
                                         <FormMessage />
@@ -210,7 +210,7 @@ export default function CreateServer() {
                                     </FormItem>
                                 )}
                             />
-                            {form.watch("type") === "CURSEFORGE" && (
+                            {form.watch("type") === "AUTO_CURSEFORGE" && (
                                 <section className="flex flex-row items-center gap-4 w-full">
                                     <FormField
                                         name="cf_api_key"

@@ -9,6 +9,7 @@ import { getJWTSecret } from 'src/utils';
 
 @Module({
   imports: [PassportModule, JwtModule.register({
+    global: true,
     secret: getJWTSecret(),
     signOptions: { expiresIn: '15m' },
   })],

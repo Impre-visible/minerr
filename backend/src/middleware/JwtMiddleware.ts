@@ -7,14 +7,14 @@ import { getJWTSecret } from 'src/utils';
 export class JwtMiddleware implements NestMiddleware {
 
     private BYPASS_ROUTES = [
-        { url: 'api/auth/login', method: 'POST' },
-        { url: 'api/auth/register', method: 'POST' },
-        { url: 'api/auth/refresh', method: 'POST' },
+        { url: '/api/auth/login', method: 'POST' },
+        { url: '/api/auth/register', method: 'POST' },
+        { url: '/api/auth/refresh', method: 'POST' },
     ];
 
     use(req: Request, res: Response, next: NextFunction) {
         const route = this.BYPASS_ROUTES.find(
-            r => r.url === req.path && r.method === req.method
+            r => r.url === req.baseUrl && r.method === req.method
         );
         if (route) {
             return next(); // Bypass authentication for specified routes

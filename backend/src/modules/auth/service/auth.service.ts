@@ -7,6 +7,7 @@ import { getJWTSecret } from 'src/utils';
 
 @Injectable()
 export class AuthService {
+    private readonly jwtSecret: string = getJWTSecret();
     constructor(private prisma: PrismaService, private jwtService: JwtService) { }
 
     async validateUser(username: string, password: string) {
@@ -28,10 +29,11 @@ export class AuthService {
     }
 
     async login(user: User) {
+        console.log('JWT Secret:', this.jwtSecret);
         const payload = { username: user.username, sub: user.id };
         return {
-            access_token: this.jwtService.sign(payload, { expiresIn: '15m' }),
-            refresh_token: this.jwtService.sign(payload, { expiresIn: '30d' }),
+            access_token: this.jwtService.sign(payload, { secret: this.jwtSecret, expiresIn: '15d' }),
+            refresh_token: this.jwtService.sign(payload, { secret: this.jwtSecret, expiresIn: '30d' }),
         };
     }
 
@@ -55,8 +57,10 @@ export class AuthService {
 
     async refreshToken(refreshToken: string) {
         try {
+            console.log('Refreshing token with:', refreshToken);
+            console.log('JWT Secret:', this.jwtSecret);
             const payload = this.jwtService.verify(refreshToken, {
-                secret: getJWTSecret(),
+                secret: this.jwtSecret,
             });
 
             return {

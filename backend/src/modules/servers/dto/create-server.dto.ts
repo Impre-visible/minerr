@@ -1,4 +1,8 @@
 interface CreateServerDto {
-    port: number;
-    env: Record<string, string>
+    cf_api_key: string;
+    cf_modpack_url: string;
+    memory: number; // in MB
+    port: number; // server port
+    type: "VANILLA" | "CURSEFORGE"; // server type (e.g., "VANILLA", "CURSEFORGE", etc.)
+    version: string; // server version (e.g., "1.20.1")
 }

@@ -1,6 +1,8 @@
 import { env } from "@/environment"
 import { useState, useCallback } from "react"
 import useRefreshToken from "./use-refresh-token"
+import { toast } from "sonner"
+import { l } from "node_modules/react-router/dist/development/fog-of-war-D2zsXvum.d.mts"
 
 interface UsePostResult<T, P> {
     data: T | null
@@ -12,7 +14,7 @@ interface UsePostResult<T, P> {
 
 export function usePost<T = any, P = any>(
     url: string,
-    options?: Omit<RequestInit, "method" | "body">,
+    options?: Omit<RequestInit, "method" | "body"> & { toast?: boolean },
 ): UsePostResult<T, P> {
     const [data, setData] = useState<T | null>(null)
     const [isLoading, setIsLoading] = useState<boolean>(false)
@@ -53,7 +55,7 @@ export function usePost<T = any, P = any>(
                         setData(result);
                         return result;
                     } else {
-                        throw new Error(`Erreur HTTP: ${response.status}`);
+                        throw new Error("customerr:" + JSON.stringify(await response.json()));
                     }
                 } else {
                     const result = await response.json();
@@ -61,6 +63,17 @@ export function usePost<T = any, P = any>(
                     return result;
                 }
             } catch (err) {
+                let errorMessage = err instanceof Error ? err.message : "An error occurred during the request";
+                if (err instanceof Error && err.message.startsWith("customerr:")) {
+                    errorMessage = JSON.parse(err.message.replace("customerr:", ""))?.message || errorMessage;
+                }
+
+                if (options?.toast !== false) { // Default toast to true
+                    toast.error('Error during request', {
+                        description: errorMessage,
+                        duration: 5000,
+                    });
+                }
                 setError(err as Error);
                 setData(null);
                 return null;

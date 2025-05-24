@@ -34,6 +34,7 @@ export function useGet<T = any>(url: string, options?: RequestInit): UseGetResul
 
                 if (!response.ok) {
                     if (response.status === 401) {
+                        console.warn("Token expired, refreshing...");
                         await refreshToken();
                         const retryResponse = await fetch(`${env.VITE_API_URL || ""}/api${url}`, {
                             method: 'GET',

@@ -2,6 +2,7 @@ import { useTheme } from '@/components/theme-provider';
 import { ModeToggle } from '@/components/ui/mode-toggle';
 import { Toaster } from '@/components/ui/sonner';
 import { Outlet } from 'react-router'
+import { AuthProvider } from '@/context/auth-context';
 
 export default function RootLayout() {
     const { theme } = useTheme();
@@ -15,7 +16,9 @@ export default function RootLayout() {
                     <ModeToggle />
                 </header>
                 <main className="flex flex-col items-center justify-center h-full w-full">
-                    <Outlet />
+                    <AuthProvider>
+                        <Outlet />
+                    </AuthProvider>
                 </main>
             </section>
         </>

@@ -10,13 +10,14 @@ import { PrismaService } from './prisma/prisma.service';
 import { AuthModule } from './modules/auth/auth.module';
 import { JwtMiddleware } from './middleware/JwtMiddleware';
 import { MeModule } from './modules/me/me.module';
+import { ServersModule } from './modules/servers/servers.module';
 
 
 @Module({
   imports: [ConfigModule.forRoot({
     isGlobal: true,
     envFilePath: ['.env'],
-  }), HttpModule, AuthModule, MeModule],
+  }), HttpModule, AuthModule, MeModule, ServersModule],
   controllers: [AppController],
   providers: [AppService, PrismaService],
 })

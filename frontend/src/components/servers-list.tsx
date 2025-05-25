@@ -11,13 +11,17 @@ import { Dialog, DialogContent, DialogHeader } from "./ui/dialog";
 import { DialogTitle } from "@radix-ui/react-dialog";
 import ReactAnsi from "react-ansi";
 import { useTheme } from "./theme-provider";
+import { ServerType } from "@/pages";
 
 
-const formatMemory = (memoryAsMb: string): string => {
-    const memoryInMb = parseInt(memoryAsMb, 10);
+const formatMemory = (memoryAsMb: string | number): string => {
+    if (typeof memoryAsMb === "number") {
+        memoryAsMb = memoryAsMb.toString();
+    }
+    const memoryInMb = parseFloat(memoryAsMb);
     if (isNaN(memoryInMb)) return "N/A";
 
-    return `${(memoryInMb / 1024)} Gb`;
+    return `${(memoryInMb / 1024).toFixed(2)} Gb`;
 }
 
 function ActionButton({ icon: Icon, onClick, text, disabled }: { icon: React.ComponentType<any>, onClick: () => void, text: string, disabled?: boolean }) {
@@ -39,7 +43,7 @@ function ActionButton({ icon: Icon, onClick, text, disabled }: { icon: React.Com
     );
 }
 
-function ServerItem({ server, refreshServers, handleLogClick }: { server: dockerode.ContainerInspectInfo, refreshServers: () => void, handleLogClick: (containerId: string) => void }) {
+function ServerItem({ server, refreshServers, handleLogClick }: { server: ServerType, refreshServers: () => void, handleLogClick: (containerId: string) => void }) {
     const { execute, data, isLoading } = usePost(`/servers/${server.Id}/action`);
 
     const statusColors: Record<string, string> = {
@@ -83,25 +87,28 @@ function ServerItem({ server, refreshServers, handleLogClick }: { server: docker
 
     return (
         <Card className="shadow-md hover:shadow-lg transition-shadow duration-200">
-            <CardHeader className="text-lg font-semibold flex justify-between items-center">
-                <span className="flex items-center gap-4">
-                    <span>{server.Name ? server.Name.slice(1) : "Name not found"}</span>
-                    <span className="text-gray-300 text-sm">({server.Id.slice(0, 12)})</span>
-                </span>
-                <Tooltip>
-                    <TooltipTrigger className="flex items-center">
-                        <span className={`w-3 h-3 rounded-full ${statusColors[server.State.Status] || "bg-gray-300"}`}></span>
-                    </TooltipTrigger>
-                    <TooltipContent className="bg-primary text-secondary">
-                        {server.State.Status.charAt(0).toUpperCase() + server.State.Status.slice(1)}
-                    </TooltipContent>
-                </Tooltip>
+            <CardHeader className="text-lg font-semibold flex flex-col gap-2">
+                <section className="flex justify-between items-center">
+                    <span className="flex items-center gap-4">
+                        <span>{server.Name ? server.Name.slice(1) : "Name not found"}</span>
+                        <span className="text-gray-300 text-sm">({server.Id.slice(0, 12)})</span>
+                    </span>
+                    <Tooltip>
+                        <TooltipTrigger className="flex items-center">
+                            <span className={`w-3 h-3 rounded-full ${statusColors[server.State.Status] || "bg-gray-300"}`}></span>
+                        </TooltipTrigger>
+                        <TooltipContent className="bg-primary text-secondary">
+                            {server.State.Status.charAt(0).toUpperCase() + server.State.Status.slice(1)}
+                        </TooltipContent>
+                    </Tooltip>
+                </section>
+                <h4 className="text-md font-medium ">{getEnvValue('MOTD_NAME', 'A Minecraft Server')}</h4>
             </CardHeader>
             <CardContent className="grid grid-cols-2 gap-2">
                 <p className="text-sm">Port: {server.HostConfig.PortBindings['25565/tcp'][0].HostPort}</p>
                 <p className="text-sm">Type: {types[getEnvValue('TYPE', '')]}</p>
                 <p className="text-sm">Version: {getEnvValue('VERSION', 'N/A')}</p>
-                <p className="text-sm">Memory Limit: {formatMemory(getEnvValue('MEMORY', 'N/A'))}</p>
+                <p className="text-sm">Memory Usage: {formatMemory(server.memory_stats.usage / 1024 / 1024)}/{formatMemory(getEnvValue('MEMORY', 'N/A'))}</p>
             </CardContent>
             <CardFooter className="flex justify-between items-center">
                 <div className="w-full flex justify-between items-center">
@@ -143,7 +150,7 @@ function ServerItem({ server, refreshServers, handleLogClick }: { server: docker
     );
 }
 
-export default function ServersList({ servers, refreshServers }: { servers: dockerode.ContainerInspectInfo[], refreshServers: () => void }) {
+export default function ServersList({ servers, refreshServers }: { servers: ServerType[], refreshServers: () => void }) {
     const { theme } = useTheme();
 
     const logContainerRef = useRef<HTMLDivElement>(null);
@@ -202,7 +209,7 @@ export default function ServersList({ servers, refreshServers }: { servers: dock
 
 
     return (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-4 p-4">
+        <div className="grid grid-cols-1 md:grid-cols-2  gap-4 p-4">
             {servers.map((server, index) => (
                 <ServerItem key={index} refreshServers={refreshServers} server={server} handleLogClick={handleLogClick} />
             ))}

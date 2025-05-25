@@ -2,6 +2,8 @@ import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import * as dockerode from 'dockerode';
 import { Readable } from 'stream';
 
+export type ServerType = dockerode.ContainerInspectInfo & dockerode.ContainerStats
+
 @Injectable()
 export class ServersService {
     private docker: dockerode;
@@ -11,9 +13,19 @@ export class ServersService {
         this.docker.getImage('itzg/minecraft-server:latest')
     }
 
-    async getServers(): Promise<dockerode.ContainerInspectInfo[]> {
+    async getServers(): Promise<ServerType[]> {
         try {
-            const containers = await Promise.all((await this.docker.listContainers({ all: true })).filter(container => container.Image.includes('itzg/minecraft-server')).map(async container => await this.docker.getContainer(container.Id).inspect()));
+            const containers: ServerType[] = await Promise.all((await this.docker.listContainers({ all: true }))
+                .filter(container => container.Image.includes('itzg/minecraft-server'))
+                .map(async container => {
+                    let currentContainer = await this.docker.getContainer(container.Id);
+                    let info = await currentContainer.inspect();
+                    let stats = await currentContainer.stats({ stream: false }).catch(() => ({}));
+                    return {
+                        ...info,
+                        ...stats
+                    } as ServerType;
+                }));
             return containers;
         } catch (error) {
             throw new Error(`Failed to retrieve servers: ${error.message}`);

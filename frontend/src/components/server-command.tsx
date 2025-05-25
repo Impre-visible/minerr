@@ -47,10 +47,10 @@ export default function ServerCommand({ selectedContainerId, logs, isOpen, setIs
                 {selectedContainerId ? (
                     <section className="flex flex-col gap-4">
                         <DialogTitle className="text-xl font-bold">Logs for {selectedContainerId.slice(0, 12)}</DialogTitle>
-                        <div className="!w-[78vw] !max-w-[78vw] h-[75dvh]">
+                        <div className="!w-[78vw] !max-w-[78vw] min-h-[75dvh] max-h-[75dvh]">
                             <div
                                 ref={logContainerRef}
-                                className="w-full h-[74dvh] overflow-y-auto rounded-md"
+                                className="w-full h-[75dvh] overflow-y-auto rounded-md"
                                 onScroll={(e) => {
                                     const el = e.currentTarget;
                                     const nearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 50;

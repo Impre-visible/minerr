@@ -4,13 +4,13 @@ A web application to easily create and manage minecraft servers.
 
 ## 📋 Description
 
-Minerr is a web application designed to simplify the process of creating and managing Minecraft servers. It provides an intuitive interface for users to set up their servers, manage configurations, and more.
+Minerr is a web application designed to simplify the process of creating and managing Minecraft servers. It is particularly aimed at users who want to deploy small servers for playing with friends, requiring minimal configuration effort.
 
 ## ✨ Features
 
 - Create Minecraft servers
-- Add mods, modpacks, and plugins
-- Manage server configurations (e.g., ram, CPU, etc.)
+- Add modpacks
+- Manage server configurations (e.g., ram, port etc.)
 - Monitor server performance
 
 ## 🛠️ Technology Stack
@@ -35,7 +35,7 @@ The easiest way to run Minerr is using Docker:
 docker pull imprevisible/minerr
 
 # Run the container
-docker run -p 80:80 imprevisible/minerr
+docker run -p 80:80 -e DATABASE_URL=postgres://user:password@host:port/dbname imprevisible/minerr # Replace with your database credentials
 ```
 
 ### Docker Images

@@ -26,15 +26,23 @@ export class ServersController {
     @Sse(':container_id/logs')
     getLogs(@Param('container_id') containerId: string): Observable<{ data: string[], index: number }> {
         let index = 0;
-        return interval(1000).pipe(
-            map(async () => ({
-                data: await this.serversService.getLogs(containerId, index),
-                index: ++index
-            })),
-            mergeMap(async (result) => ({
-                data: (await result).data,
-                index: (await result).index
-            }))
+        let previousLogs: string[] = [];
+        return interval(100).pipe(
+            mergeMap(async () => {
+                const currentLogs = await this.serversService.getLogs(containerId, index);
+                if (JSON.stringify(currentLogs) !== JSON.stringify(previousLogs)) {
+                    previousLogs = currentLogs;
+                    return { data: currentLogs, index: ++index };
+                }
+                return null;
+            }),
+            map((result) => {
+                if (result) {
+                    return { data: result.data, index: result.index };
+                }
+                return null;
+            }),
+            mergeMap((result) => result ? [result] : [])
         );
     }
 }

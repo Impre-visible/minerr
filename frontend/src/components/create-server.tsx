@@ -24,6 +24,7 @@ import { Input } from "./ui/input"
 import { useEffect, useState } from "react"
 import BetterSlider from "./better-slider"
 import { usePost } from "@/hooks/use-post"
+import { toast } from "sonner"
 
 const formSchema = z.object({
     memory: z.number().int().min(128).max(16384).default(1024),
@@ -68,7 +69,7 @@ const formSchema = z.object({
     }
 })
 
-export default function CreateServer() {
+export default function CreateServer({ refreshServers }: { refreshServers: () => void }) {
     const { execute, data: serverCreateData, error: serverCreateError } = usePost("/servers/create")
     const [isOpen, setIsOpen] = useState(false)
 
@@ -103,13 +104,14 @@ export default function CreateServer() {
 
     useEffect(() => {
         if (serverCreateData) {
-            console.log("Server created successfully:", serverCreateData)
             setIsOpen(false)
+            refreshServers()
         }
         if (serverCreateError) {
-            console.error("Error creating server:", serverCreateError)
-            // Handle error appropriately, e.g., show a toast notification
             alert(`Error creating server: ${serverCreateError.message}`)
+            toast.error(`Error`, {
+                description: serverCreateError.message || "An error occurred while creating the server.",
+            })
         }
     }, [serverCreateData, serverCreateError])
 

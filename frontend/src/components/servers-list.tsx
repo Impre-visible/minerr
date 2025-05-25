@@ -76,7 +76,7 @@ function ServerItem({ server, refreshServers }: { server: dockerode.ContainerIns
     }, [data, server.Name]);
 
     return (
-        <Card className="p-4 shadow-md hover:shadow-lg transition-shadow duration-200">
+        <Card className="shadow-md hover:shadow-lg transition-shadow duration-200">
             <CardHeader className="text-lg font-semibold flex justify-between items-center">
                 <span className="flex items-center gap-4">
                     <span>{server.Name ? server.Name.slice(1) : "Name not found"}</span>

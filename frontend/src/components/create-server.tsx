@@ -293,7 +293,7 @@ export default function CreateServer({ refreshServers }: { refreshServers: () =>
                                                 <FormLabel>CurseForge API Key</FormLabel>
                                                 <FormControl>
                                                     <Input
-                                                        type="text"
+                                                        type="password"
                                                         placeholder="Your CurseForge API Key"
                                                         {...field}
                                                     />

@@ -5,4 +5,6 @@ services:
       - "80:80"
     environment:
       - DATABASE_URL=${DATABASE_URL}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
     restart: unless-stopped

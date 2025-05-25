@@ -1,9 +1,10 @@
 import { Dialog, DialogContent, DialogFooter, DialogTitle } from "./ui/dialog";
 import ReactAnsi from "react-ansi";
-import { useEffect, useRef } from "react";
-import { useTheme } from "next-themes";
-import { Loader2 } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Loader2, SendHorizonal } from "lucide-react";
 import { Input } from "./ui/input";
+import { Button } from "./ui/button";
+import { usePost } from "@/hooks/use-post";
 
 export default function ServerCommand({ selectedContainerId, logs, isOpen, setIsOpen }: {
     selectedContainerId: string | null;
@@ -11,11 +12,27 @@ export default function ServerCommand({ selectedContainerId, logs, isOpen, setIs
     isOpen: boolean;
     setIsOpen: (open: boolean) => void;
 }) {
-    const { theme } = useTheme();
-
+    const [command, setCommand] = useState("");
     const logContainerRef = useRef<HTMLDivElement>(null);
 
+    const { execute: executeCommand } = usePost(`/servers/${selectedContainerId}/action`);
 
+    const handleCommandSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        let clean_command = command.trim();
+        if (!clean_command) return;
+
+        if (clean_command.startsWith("/")) {
+            clean_command = clean_command.slice(1); // Remove leading slash if present
+        }
+
+        try {
+            await executeCommand({ action: "command", params: clean_command });
+            setCommand("");
+        } catch (error) {
+            console.error("Failed to execute command:", error);
+        }
+    };
 
     useEffect(() => {
         const container = logContainerRef.current;
@@ -28,12 +45,12 @@ export default function ServerCommand({ selectedContainerId, logs, isOpen, setIs
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogContent className="p-4 !w-[80vw] !max-w-[80vw]">
                 {selectedContainerId ? (
-                    <>
+                    <section className="flex flex-col gap-4">
                         <DialogTitle className="text-xl font-bold">Logs for {selectedContainerId.slice(0, 12)}</DialogTitle>
-                        <div className="!w-[78vw] !max-w-[78vw]">
+                        <div className="!w-[78vw] !max-w-[78vw] h-[75dvh]">
                             <div
                                 ref={logContainerRef}
-                                className="w-full h-[80dvh] overflow-y-auto"
+                                className="w-full h-[74dvh] overflow-y-auto rounded-md"
                                 onScroll={(e) => {
                                     const el = e.currentTarget;
                                     const nearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 50;
@@ -59,11 +76,31 @@ export default function ServerCommand({ selectedContainerId, logs, isOpen, setIs
                                 }
                             </div>
                         </div>
-                    </>
+                        <DialogFooter className="flex items-center justify-between">
+                            <Input
+                                className="flex-1"
+                                type="text"
+                                placeholder="Enter command...(e.g., op <username>, ban <username>, etc.)"
+                                value={command}
+                                onChange={(e) => setCommand(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === "Enter") {
+                                        e.preventDefault();
+                                        handleCommandSubmit(e);
+                                    }
+                                }}
+                            />
+                            <Button
+                                className="h-full aspect-1/1 !p-0 group"
+                                onClick={handleCommandSubmit}
+                            >
+                                <SendHorizonal className={`w-4 h-4 -rotate-45 transition-transform ease-in-out duration-200 group-hover:rotate-0 group-active:scale-90`} />
+                            </Button>
+                        </DialogFooter>
+                    </section>
                 ) : (
                     <p className="text-sm text-gray-500">Select a server to view logs.</p>
-                )
-                }
+                )}
             </DialogContent>
         </Dialog>
     )

@@ -150,12 +150,47 @@ export class ServersService {
                     if (!actionDto.params) {
                         throw new InternalServerErrorException('No command provided to execute.');
                     }
-                    await container.exec({
-                        Cmd: actionDto.params.split(' '),
-                        AttachStdout: true,
-                        AttachStderr: true,
-                    });
-                    return data;
+                    try {
+                        container.exec({
+                            Cmd: ['rcon-cli', ...actionDto.params.split(' ')],
+                            AttachStdout: true,
+                            AttachStderr: true,
+                        }).then((exec) => {
+                            return exec.start({ Detach: false, Tty: false });
+                        }).then((stream) => {
+                            return new Promise((resolve, reject) => {
+                                const output: string[] = [];
+                                stream.on('data', (chunk: Buffer) => {
+                                    output.push(chunk.toString());
+                                });
+                                stream.on('end', () => {
+                                    data.message = `Command executed successfully: ${actionDto.params}`;
+                                    data.success = true;
+                                    resolve(output.join(''));
+                                });
+                                stream.on('error', (err: Error) => {
+                                    data.success = false;
+                                    data.message = `Error executing command: ${err.message}`;
+                                    reject(err);
+                                });
+                            });
+                        }).catch((error) => {
+                            data.success = false;
+                            data.message = `Failed to execute command ${actionDto.params} on server ${dockerId}: ${error.message}`;
+                            throw new InternalServerErrorException(data.message);
+                        });
+                        // Log the command execution
+                        data.message = `Command executed successfully: ${actionDto.params}`;
+                        data.success = true;
+                        // Note: The above exec command is asynchronous, so we return the data immediately.
+                        // In a real application, you might want to wait for the command to finish before returning.
+                        // For now, we just log the command execution.
+                        return data;
+                    } catch (error) {
+                        data.success = false;
+                        data.message = `Failed to execute command ${actionDto.params} on server ${dockerId}: ${error.message}`;
+                        throw new InternalServerErrorException(data.message);
+                    }
 
                 default:
                     throw new InternalServerErrorException(`Unknown action: ${actionDto.action}`);

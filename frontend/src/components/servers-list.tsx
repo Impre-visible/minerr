@@ -174,7 +174,7 @@ export default function ServersList({ servers, refreshServers }: { servers: Serv
                 setLogs((prevLogs) => Array.from(new Set([...prevLogs, ...log])));
             };
 
-            eventSource.onerror = (error) => {
+            eventSource.onerror = () => {
                 eventSource.close();
             };
             return () => {

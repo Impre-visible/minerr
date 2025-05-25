@@ -5,7 +5,7 @@ import { Tooltip, TooltipTrigger, TooltipContent } from "./ui/tooltip";
 import { Button } from "./ui/button";
 import { LogsIcon, PauseIcon, PlayIcon, RotateCcwIcon, Trash2Icon } from "lucide-react";
 import { usePost } from "@/hooks/use-post";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 const formatMemory = (memoryAsMb: string): string => {
     const memoryInMb = parseInt(memoryAsMb, 10);
@@ -17,7 +17,7 @@ const formatMemory = (memoryAsMb: string): string => {
 function ActionButton({ icon: Icon, onClick, text, disabled }: { icon: React.ComponentType<any>, onClick: () => void, text: string, disabled?: boolean }) {
     return (
         <Tooltip>
-            <TooltipTrigger className="flex items-center">
+            <TooltipTrigger className="flex items-center" asChild>
                 <Button
                     variant="outline"
                     onClick={onClick}
@@ -33,7 +33,7 @@ function ActionButton({ icon: Icon, onClick, text, disabled }: { icon: React.Com
     );
 }
 
-function ServerItem({ server, refreshServers }: { server: dockerode.ContainerInspectInfo, refreshServers: () => void }) {
+function ServerItem({ server, refreshServers, handleLogClick }: { server: dockerode.ContainerInspectInfo, refreshServers: () => void, handleLogClick: (containerId: string) => void }) {
     const { execute, data, isLoading } = usePost(`/servers/${server.Id}/action`);
 
     const statusColors: Record<string, string> = {
@@ -127,7 +127,7 @@ function ServerItem({ server, refreshServers }: { server: dockerode.ContainerIns
                     </section>
                     <ActionButton
                         icon={LogsIcon}
-                        onClick={() => console.log("Delete action not implemented yet")}
+                        onClick={() => handleLogClick(server.Id)}
                         disabled={false}
                         text="Logs"
                     />
@@ -138,10 +138,45 @@ function ServerItem({ server, refreshServers }: { server: dockerode.ContainerIns
 }
 
 export default function ServersList({ servers, refreshServers }: { servers: dockerode.ContainerInspectInfo[], refreshServers: () => void }) {
+    const [logs, setLogs] = useState<string[]>([]);
+    const [socket, setSocket] = useState<WebSocket | null>(null);
+
+    const handleLogClick = (containerId: string) => {
+        const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+        const newSocket = new WebSocket(`${protocol}://${window.location.host}/api/servers/logs?container_id=${containerId}`);
+        setSocket(newSocket);
+    };
+
+    useEffect(() => {
+        if (socket) {
+            socket.onopen = () => {
+                console.log("WebSocket connection established");
+                socket.send(JSON.stringify({ type: "logs_init" }));
+            };
+
+            socket.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                if (data.type === "log") {
+                    setLogs(prevLogs => [...prevLogs, data.log]);
+                } else if (data.type === "logs_init") {
+                    setLogs(data.logs);
+                }
+            };
+
+            socket.onclose = () => {
+                console.log("WebSocket connection closed");
+            };
+
+            return () => {
+                socket.close();
+            };
+        }
+    }, [socket]);
+
     return (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-4 p-4">
             {servers.map((server, index) => (
-                <ServerItem key={index} refreshServers={refreshServers} server={server} />
+                <ServerItem key={index} refreshServers={refreshServers} server={server} handleLogClick={handleLogClick} />
             ))}
         </div>
     );

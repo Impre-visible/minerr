@@ -1,17 +1,13 @@
 
-import dockerode from "dockerode";
 import { Card, CardContent, CardFooter, CardHeader } from "./ui/card";
 import { Tooltip, TooltipTrigger, TooltipContent } from "./ui/tooltip";
 import { Button } from "./ui/button";
-import { Loader2, LogsIcon, PauseIcon, PlayIcon, RotateCcwIcon, Trash2Icon } from "lucide-react";
+import { LogsIcon, PauseIcon, PlayIcon, RotateCcwIcon, Trash2Icon } from "lucide-react";
 import { usePost } from "@/hooks/use-post";
 import { useEffect, useRef, useState } from "react";
 import { env } from "@/environment";
-import { Dialog, DialogContent, DialogHeader } from "./ui/dialog";
-import { DialogTitle } from "@radix-ui/react-dialog";
-import ReactAnsi from "react-ansi";
-import { useTheme } from "./theme-provider";
 import { ServerType } from "@/pages";
+import ServerCommand from "./server-command";
 
 
 const formatMemory = (memoryAsMb: string | number): string => {
@@ -151,8 +147,6 @@ function ServerItem({ server, refreshServers, handleLogClick }: { server: Server
 }
 
 export default function ServersList({ servers, refreshServers }: { servers: ServerType[], refreshServers: () => void }) {
-    const { theme } = useTheme();
-
     const logContainerRef = useRef<HTMLDivElement>(null);
 
     const [selectedContainerId, setSelectedContainerId] = useState<string | null>(null);
@@ -213,49 +207,7 @@ export default function ServersList({ servers, refreshServers }: { servers: Serv
             {servers.map((server, index) => (
                 <ServerItem key={index} refreshServers={refreshServers} server={server} handleLogClick={handleLogClick} />
             ))}
-            <Dialog open={isOpen} onOpenChange={setIsOpen}>
-                <DialogContent className="p-4 !w-[80vw] !max-w-[80vw]">
-                    {selectedContainerId ? (
-                        <>
-                            <DialogTitle className="text-xl font-bold">Logs for {selectedContainerId.slice(0, 12)}</DialogTitle>
-                            <div className="!w-[78vw] !max-w-[78vw]">
-                                <div
-                                    ref={logContainerRef}
-                                    className="w-full h-[80dvh] overflow-y-auto bg-neutral-100 dark:bg-neutral-900 color-neutral-900 dark:text-neutral-100 p-4 rounded-lg"
-                                    onScroll={(e) => {
-                                        const el = e.currentTarget;
-                                        const nearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 50;
-                                        el.dataset.autoscroll = nearBottom ? "true" : "false";
-                                    }}
-                                >
-                                    {
-                                        logs.length > 0 ? (
-                                            <ReactAnsi
-                                                bodyStyle={{ background: "transparent" }}
-                                                logStyle={{ color: theme === "dark" ? "#f5f5f5" : "#262626", fontFamily: "monospace", whiteSpace: "pre-wrap" }}
-                                                log={logs
-                                                    .map((line) =>
-                                                        line
-                                                    )
-                                                    .join("\n")}
-                                            />
-                                        ) : selectedContainerId ? (
-                                            <span className="flex items-center justify-center h-full text-gray-500">
-                                                <Loader2 className="animate-spin inline-block w-16 h-16 stroke-1" />
-                                            </span>
-                                        ) : (
-                                            <p className="text-sm text-gray-500">No logs available.</p>
-                                        )
-                                    }
-                                </div>
-                            </div>
-                        </>
-                    ) : (
-                        <p className="text-sm text-gray-500">Select a server to view logs.</p>
-                    )
-                    }
-                </DialogContent>
-            </Dialog>
+            <ServerCommand selectedContainerId={selectedContainerId} logs={logs} isOpen={isOpen} setIsOpen={setIsOpen} />
         </div>
     );
 }

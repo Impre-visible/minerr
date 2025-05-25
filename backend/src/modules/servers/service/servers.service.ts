@@ -1,6 +1,7 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import * as dockerode from 'dockerode';
 import { Readable } from 'stream';
+import { Actions } from '../controller/servers.controller';
 
 export type ServerType = dockerode.ContainerInspectInfo & dockerode.ContainerStats
 
@@ -117,7 +118,7 @@ export class ServersService {
         }
     }
 
-    async performAction(dockerId: string, actionDto: { action: 'start' | 'pause' | 'restart' | 'delete' }): Promise<{
+    async performAction(dockerId: string, actionDto: { action: Actions, params?: string }): Promise<{
         success: boolean;
         message: string;
     }> {
@@ -145,6 +146,17 @@ export class ServersService {
                     await container.remove({ force: true });
                     data.message = `Server ${dockerId} started successfully.`;
                     return data;
+                case 'command':
+                    if (!actionDto.params) {
+                        throw new InternalServerErrorException('No command provided to execute.');
+                    }
+                    await container.exec({
+                        Cmd: actionDto.params.split(' '),
+                        AttachStdout: true,
+                        AttachStderr: true,
+                    });
+                    return data;
+
                 default:
                     throw new InternalServerErrorException(`Unknown action: ${actionDto.action}`);
             }

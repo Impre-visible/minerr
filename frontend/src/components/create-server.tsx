@@ -1,6 +1,6 @@
 import { z } from "zod"
 import { ResponsiveDrawerDialog, ResponsiveDrawerDialogContent, ResponsiveDrawerDialogTrigger } from "./ui/responsive-dialog"
-import { Plus } from "lucide-react"
+import { Loader2, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
     Form,
@@ -22,15 +22,13 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { Input } from "./ui/input"
 import { useEffect, useState } from "react"
-import BetterSlider from "./better-slider"
 import { usePost } from "@/hooks/use-post"
-import { toast } from "sonner"
 
 const formSchema = z.object({
     name: z.string().min(1, "Server name is required").max(50, "Server name must be less than 50 characters").regex(/^[a-zA-Z0-9][a-zA-Z0-9_.-]*$/, "Server name must start with a letter or number and can only contain letters, numbers, underscores, hyphens, and periods."),
     motd: z.string().optional().nullable(),
     max_players: z.number().int().min(1).max(10000).default(20), // Optional, default to 20 players
-    memory: z.number().int().min(1024).max(16384).default(1024),
+    memory: z.number().int().min(0).max(16384).default(2048),
     port: z.number().int().min(1).max(65535).default(25565),
     version: z.string().default('1.20.1'), // This is used to specify the Minecraft version, e.g., "1.20.1" 
     type: z.string().default("VANILLA"),
@@ -55,7 +53,7 @@ const formSchema = z.object({
     if (data.memory < 1024 || data.memory > 16384) {
         ctx.addIssue({
             code: z.ZodIssueCode.custom,
-            message: "Memory must be between 1 and 16 GB (1024 to 16384 MB).",
+            message: "Memory must be between 1024 MB and 16384 MB (16 GB).",
         })
     }
     if (data.port < 1 || data.port > 65535) {
@@ -73,7 +71,7 @@ const formSchema = z.object({
 })
 
 export default function CreateServer({ refreshServers }: { refreshServers: () => void }) {
-    const { execute, data: serverCreateData, error: serverCreateError } = usePost("/servers/create")
+    const { execute, data: serverCreateData } = usePost("/servers/create")
     const [isOpen, setIsOpen] = useState(false)
 
     const form = useForm({
@@ -116,13 +114,7 @@ export default function CreateServer({ refreshServers }: { refreshServers: () =>
             setIsOpen(false)
             refreshServers()
         }
-        if (serverCreateError) {
-            console.error("Server creation error:", serverCreateError)
-            toast.error(`Error`, {
-                description: serverCreateError.message.split(':', 1)[1] || "An error occurred while creating the server.",
-            })
-        }
-    }, [serverCreateData, serverCreateError])
+    }, [serverCreateData])
 
     return (
         <ResponsiveDrawerDialog open={isOpen} onOpenChange={handleOpenChange}>
@@ -227,44 +219,51 @@ export default function CreateServer({ refreshServers }: { refreshServers: () =>
                                     )}
                                 />
                             </section>
-                            <FormField
-                                name="max_players"
-                                render={({ field, fieldState }) => (
-                                    <FormItem>
-                                        <FormLabel>Max Players</FormLabel>
-                                        <FormControl>
-                                            <Input
-                                                type="number"
-                                                placeholder="Max Players"
-                                                value={field.value}
-                                                onChange={(e) => {
-                                                    field.onChange(Math.max(1, Math.min(10000, parseInt(e.target.value, 10) || 20))) // Ensure value is between 1 and 10000
-                                                }}
-                                            />
-                                        </FormControl>
-                                        {fieldState.error && <FormMessage />}
-                                    </FormItem>
-                                )}
-                            />
-                            <FormField
-                                name="memory"
-                                render={({ field, fieldState }) => (
-                                    <FormItem>
-                                        <FormLabel>Memory (GB)</FormLabel>
-                                        <section className="w-full flex flex-col justify-between gap-2">
-                                            <BetterSlider value={[field.value / 1024]} onValueChange={(value) => {
-                                                const memoryValue = value[0]
-                                                if (memoryValue >= 1 && memoryValue <= 16) {
-                                                    field.onChange(memoryValue * 1024) // Convert to MB
-                                                } else {
-                                                    field.onChange(1024)
-                                                }
-                                            }} min={1} max={16} step={1} labelFunction={(value) => `${value}Gb`} />
-                                        </section>
-                                        {fieldState.error && <FormMessage />}
-                                    </FormItem>
-                                )}
-                            />
+                            <section className="w-full flex flex-row gap-2">
+                                <FormField
+                                    name="max_players"
+                                    render={({ field, fieldState }) => (
+                                        <FormItem className="w-full">
+                                            <FormLabel>Max Players</FormLabel>
+                                            <FormControl>
+                                                <Input
+                                                    type="number"
+                                                    placeholder="Max Players"
+                                                    value={field.value}
+                                                    onChange={(e) => {
+                                                        field.onChange(Math.max(1, Math.min(10000, parseInt(e.target.value, 10) || 20))) // Ensure value is between 1 and 10000
+                                                    }}
+                                                />
+                                            </FormControl>
+                                            {fieldState.error && <FormMessage />}
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    name="memory"
+                                    render={({ field, fieldState }) => (
+                                        <FormItem className="w-full">
+                                            <FormLabel>Memory (MB)</FormLabel>
+                                            <FormControl>
+                                                <Input
+                                                    type="number"
+                                                    placeholder="Memory (MB)"
+                                                    value={field.value}
+                                                    onChange={(e) => {
+                                                        const memoryValue = parseInt(e.target.value, 10)
+                                                        if (!isNaN(memoryValue) || e.target.value === '') {
+                                                            field.onChange(memoryValue)
+                                                        } else {
+                                                            field.onChange(1024)
+                                                        }
+                                                    }}
+                                                />
+                                            </FormControl>
+                                            {fieldState.error && <FormMessage />}
+                                        </FormItem>
+                                    )}
+                                />
+                            </section>
                             <FormField
                                 name="port"
                                 render={({ field, fieldState }) => (
@@ -325,8 +324,11 @@ export default function CreateServer({ refreshServers }: { refreshServers: () =>
                                 type="submit"
                                 className="mt-4"
                                 onClick={form.handleSubmit(handleSubmit)}
-                                disabled={!form.formState.isValid || form.formState.isSubmitting}
+                                disabled={form.formState.isSubmitting}
                             >
+                                {form.formState.isSubmitting ? (
+                                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                                ) : null}
                                 Create Server
                             </Button>
                         </form>

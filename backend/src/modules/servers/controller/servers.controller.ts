@@ -2,7 +2,7 @@ import { Body, Controller, Get, Param, Post, Sse } from '@nestjs/common';
 import { ServersService } from '../service/servers.service';
 import { interval, map, mergeMap, Observable } from 'rxjs';
 
-type Actions = 'start' | 'pause' | 'restart' | 'delete';
+export type Actions = 'start' | 'pause' | 'restart' | 'delete' | 'command';
 
 @Controller('servers')
 export class ServersController {
@@ -18,7 +18,7 @@ export class ServersController {
     }
 
     @Post(':docker_id/action')
-    async performAction(@Body() actionDto: { action: Actions }, @Param('docker_id') dockerId: string) {
+    async performAction(@Body() actionDto: { action: Actions, params?: string }, @Param('docker_id') dockerId: string) {
         let data = await this.serversService.performAction(dockerId, actionDto)
         return data;
     }

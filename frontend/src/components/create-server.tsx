@@ -145,23 +145,32 @@ export default function CreateServer({ refreshServers }: { refreshServers: () =>
                             <section className="w-full flex flex-row gap-2">
                                 <FormField
                                     name="name"
-                                    render={({ field }) => (
-                                        <FormItem className="w-full">
-                                            <FormLabel>Server Name</FormLabel>
-                                            <FormControl>
-                                                <Input
-                                                    type="text"
-                                                    placeholder="My Minecraft Server"
-                                                    {...field}
-                                                />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
+                                    render={({ field, fieldState }) => {
+                                        console.log(field); return (
+                                            <FormItem className="w-full">
+                                                <FormLabel>Server Name</FormLabel>
+                                                <FormControl>
+                                                    <Input
+                                                        type="text"
+                                                        placeholder="My Minecraft Server"
+                                                        value={field.value}
+                                                        onChange={(e) => {
+                                                            const value = e.target.value
+                                                            if (/^[a-zA-Z0-9][a-zA-Z0-9_.-]*$/.test(value) || value === "") {
+                                                                field.onChange(value) // Update the field value only if it matches the regex
+                                                            }
+                                                        }}
+
+                                                    />
+                                                </FormControl>
+                                                {fieldState.error && <FormMessage />}
+                                            </FormItem>
+                                        )
+                                    }}
                                 />
                                 <FormField
                                     name="motd"
-                                    render={({ field }) => (
+                                    render={({ field, fieldState }) => (
                                         <FormItem className="w-full">
                                             <FormLabel>MOTD</FormLabel>
                                             <FormControl>
@@ -171,7 +180,7 @@ export default function CreateServer({ refreshServers }: { refreshServers: () =>
                                                     {...field}
                                                 />
                                             </FormControl>
-                                            <FormMessage />
+                                            {fieldState.error && <FormMessage />}
                                         </FormItem>
                                     )}
                                 />
@@ -179,7 +188,7 @@ export default function CreateServer({ refreshServers }: { refreshServers: () =>
                             <section className="w-full flex flex-row gap-2">
                                 <FormField
                                     name="type"
-                                    render={({ field }) => (
+                                    render={({ field, fieldState }) => (
                                         <FormItem className="w-full">
                                             <FormLabel>Server Type</FormLabel>
                                             <Select onValueChange={(value) => {
@@ -197,13 +206,13 @@ export default function CreateServer({ refreshServers }: { refreshServers: () =>
                                                     <SelectItem value="AUTO_CURSEFORGE">CurseForge</SelectItem>
                                                 </SelectContent>
                                             </Select>
-                                            <FormMessage />
+                                            {fieldState.error && <FormMessage />}
                                         </FormItem>
                                     )}
                                 />
                                 <FormField
                                     name="version"
-                                    render={({ field }) => (
+                                    render={({ field, fieldState }) => (
                                         <FormItem className="w-full">
                                             <FormLabel>Version</FormLabel>
                                             <FormControl>
@@ -213,14 +222,14 @@ export default function CreateServer({ refreshServers }: { refreshServers: () =>
                                                     {...field}
                                                 />
                                             </FormControl>
-                                            <FormMessage />
+                                            {fieldState.error && <FormMessage />}
                                         </FormItem>
                                     )}
                                 />
                             </section>
                             <FormField
                                 name="max_players"
-                                render={({ field }) => (
+                                render={({ field, fieldState }) => (
                                     <FormItem>
                                         <FormLabel>Max Players</FormLabel>
                                         <FormControl>
@@ -233,13 +242,13 @@ export default function CreateServer({ refreshServers }: { refreshServers: () =>
                                                 }}
                                             />
                                         </FormControl>
-                                        <FormMessage />
+                                        {fieldState.error && <FormMessage />}
                                     </FormItem>
                                 )}
                             />
                             <FormField
                                 name="memory"
-                                render={({ field }) => (
+                                render={({ field, fieldState }) => (
                                     <FormItem>
                                         <FormLabel>Memory (GB)</FormLabel>
                                         <section className="w-full flex flex-col justify-between gap-2">
@@ -252,13 +261,13 @@ export default function CreateServer({ refreshServers }: { refreshServers: () =>
                                                 }
                                             }} min={1} max={16} step={1} labelFunction={(value) => `${value}Gb`} />
                                         </section>
-                                        <FormMessage />
+                                        {fieldState.error && <FormMessage />}
                                     </FormItem>
                                 )}
                             />
                             <FormField
                                 name="port"
-                                render={({ field }) => (
+                                render={({ field, fieldState }) => (
                                     <FormItem>
                                         <FormLabel>Port</FormLabel>
                                         <FormControl>
@@ -272,7 +281,7 @@ export default function CreateServer({ refreshServers }: { refreshServers: () =>
                                                 }
                                             }} />
                                         </FormControl>
-                                        <FormMessage />
+                                        {fieldState.error && <FormMessage />}
                                     </FormItem>
                                 )}
                             />
@@ -280,7 +289,7 @@ export default function CreateServer({ refreshServers }: { refreshServers: () =>
                                 <section className="flex flex-row items-center gap-4 w-full">
                                     <FormField
                                         name="cf_api_key"
-                                        render={({ field }) => (
+                                        render={({ field, fieldState }) => (
                                             <FormItem className=" w-full">
                                                 <FormLabel>CurseForge API Key</FormLabel>
                                                 <FormControl>
@@ -290,13 +299,13 @@ export default function CreateServer({ refreshServers }: { refreshServers: () =>
                                                         {...field}
                                                     />
                                                 </FormControl>
-                                                <FormMessage />
+                                                {fieldState.error && <FormMessage />}
                                             </FormItem>
                                         )}
                                     />
                                     <FormField
                                         name="cf_modpack_url"
-                                        render={({ field }) => (
+                                        render={({ field, fieldState }) => (
                                             <FormItem className=" w-full">
                                                 <FormLabel>CurseForge Modpack URL</FormLabel>
                                                 <FormControl>
@@ -306,7 +315,7 @@ export default function CreateServer({ refreshServers }: { refreshServers: () =>
                                                         {...field}
                                                     />
                                                 </FormControl>
-                                                <FormMessage />
+                                                {fieldState.error && <FormMessage />}
                                             </FormItem>
                                         )}
                                     />

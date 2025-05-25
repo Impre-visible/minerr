@@ -10,14 +10,9 @@ const pullImage = async () => {
     const images = await docker.listImages();
     const imageExists = images.some(image => image.RepoTags && image.RepoTags.includes(imageName));
     if (!imageExists) {
-      console.log(`Pulling Docker image: ${imageName}`);
       await docker.pull(imageName, { authconfig: { username: process.env.DOCKER_USERNAME, password: process.env.DOCKER_PASSWORD } });
-      console.log(`Docker image ${imageName} pulled successfully.`);
-    } else {
-      console.log(`Docker image ${imageName} already exists.`);
     }
   } catch (error) {
-    console.error(`Failed to pull Docker image: ${error.message}`);
     throw new Error(`Failed to pull Docker image: ${error.message}`);
   }
 };

@@ -23,7 +23,6 @@ const useRefreshToken = () => {
             }
 
             const data = await response.json();
-            console.log('Token refreshed successfully:', data.access_token);
             localStorage.setItem('token', data.access_token);
             setIsRefreshing(false);
             return data.access_token;

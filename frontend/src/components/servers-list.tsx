@@ -63,16 +63,6 @@ function ServerItem({ server, refreshServers, handleLogClick }: { server: Server
 
     const handleAction = (action: string) => {
         execute({ action })
-            .then(response => {
-                if (response.status === 200) {
-                    console.log(`${action.charAt(0).toUpperCase() + action.slice(1)} action executed successfully for ${server.Name}`);
-                } else {
-                    console.error(`Failed to execute ${action} action for ${server.Name}:`, response.data);
-                }
-            })
-            .catch(error => {
-                console.error(`Error executing ${action} action for ${server.Name}:`, error);
-            });
     };
 
     useEffect(() => {
@@ -185,7 +175,6 @@ export default function ServersList({ servers, refreshServers }: { servers: Serv
             };
 
             eventSource.onerror = (error) => {
-                console.log("EventSource error:", error);
                 eventSource.close();
             };
             return () => {

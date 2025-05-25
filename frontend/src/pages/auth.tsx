@@ -81,9 +81,7 @@ export default function Auth() {
     const handleRegisterSubmit = (data: { username: string; password: string; confirmPassword: string }) => {
         executeRegister(data)
             .then((response) => {
-                if (!response.error) {
-                    console.log("Registration successful:", response);
-                } else {
+                if (response.error) {
                     toast.error("Registration failed", {
                         description: response.message || "An error occurred during registration.",
                     });

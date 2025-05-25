@@ -105,7 +105,6 @@ export default function CreateServer({ refreshServers }: { refreshServers: () =>
     }
 
     const handleSubmit = (data: z.infer<typeof formSchema>) => {
-        console.log("Submitted Data:", data)
         execute(data)
     }
 
@@ -130,35 +129,31 @@ export default function CreateServer({ refreshServers }: { refreshServers: () =>
                         Configure your server settings below.
                     </p>
                     <Form {...form}>
-                        <form className="flex flex-col gap-4" onSubmit={form.handleSubmit((data) => {
-                            console.log("Form Data:", data)
+                        <form className="flex flex-col gap-4" onSubmit={form.handleSubmit(() => {
                             setIsOpen(false)
                         })}>
                             <section className="w-full flex flex-row gap-2">
                                 <FormField
                                     name="name"
-                                    render={({ field, fieldState }) => {
-                                        console.log(field); return (
-                                            <FormItem className="w-full">
-                                                <FormLabel>Server Name</FormLabel>
-                                                <FormControl>
-                                                    <Input
-                                                        type="text"
-                                                        placeholder="My Minecraft Server"
-                                                        value={field.value}
-                                                        onChange={(e) => {
-                                                            const value = e.target.value
-                                                            if (/^[a-zA-Z0-9][a-zA-Z0-9_.-]*$/.test(value) || value === "") {
-                                                                field.onChange(value) // Update the field value only if it matches the regex
-                                                            }
-                                                        }}
-
-                                                    />
-                                                </FormControl>
-                                                {fieldState.error && <FormMessage />}
-                                            </FormItem>
-                                        )
-                                    }}
+                                    render={({ field, fieldState }) => (
+                                        <FormItem className="w-full">
+                                            <FormLabel>Server Name</FormLabel>
+                                            <FormControl>
+                                                <Input
+                                                    type="text"
+                                                    placeholder="My Minecraft Server"
+                                                    value={field.value}
+                                                    onChange={(e) => {
+                                                        const value = e.target.value
+                                                        if (/^[a-zA-Z0-9][a-zA-Z0-9_.-]*$/.test(value) || value === "") {
+                                                            field.onChange(value) // Update the field value only if it matches the regex
+                                                        }
+                                                    }}
+                                                />
+                                            </FormControl>
+                                            {fieldState.error && <FormMessage />}
+                                        </FormItem>
+                                    )}
                                 />
                                 <FormField
                                     name="motd"

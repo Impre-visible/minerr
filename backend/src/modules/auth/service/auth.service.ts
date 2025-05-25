@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
@@ -29,7 +29,6 @@ export class AuthService {
     }
 
     async login(user: User) {
-        console.log('JWT Secret:', this.jwtSecret);
         const payload = { username: user.username, sub: user.id };
         return {
             access_token: this.jwtService.sign(payload, { secret: this.jwtSecret, expiresIn: '15d' }),
@@ -41,7 +40,7 @@ export class AuthService {
         let alreadyExists = await this.prisma.user.count() > 0;
 
         if (alreadyExists) {
-            throw new UnauthorizedException('This application allows only one user.');
+            throw new ConflictException('This application allows only one user.');
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
@@ -57,8 +56,6 @@ export class AuthService {
 
     async refreshToken(refreshToken: string) {
         try {
-            console.log('Refreshing token with:', refreshToken);
-            console.log('JWT Secret:', this.jwtSecret);
             const payload = this.jwtService.verify(refreshToken, {
                 secret: this.jwtSecret,
             });

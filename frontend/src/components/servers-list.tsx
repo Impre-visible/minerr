@@ -84,7 +84,7 @@ function ServerItem({ server, refreshServers, handleLogClick }: { server: Server
     return (
         <Card className="shadow-md hover:shadow-lg transition-shadow duration-200">
             <CardHeader className="text-lg font-semibold flex flex-col gap-2">
-                <section className="flex justify-between items-center">
+                <section className="flex justify-between items-center w-full">
                     <span className="flex items-center gap-4">
                         <span>{server.Name ? server.Name.slice(1).split('--')[1] : "Name not found"}</span>
                         <span className="text-gray-300 text-sm">({server.Id.slice(0, 12)})</span>

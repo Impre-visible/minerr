@@ -13,6 +13,8 @@ export default function ServerCommand({ selectedContainerId, logs, isOpen, setIs
     setIsOpen: (open: boolean) => void;
 }) {
     const [command, setCommand] = useState("");
+    const [commandHistory, setCommandHistory] = useState<string[]>([]);
+    const [historyIndex, setHistoryIndex] = useState<number | null>(null);
     const logContainerRef = useRef<HTMLDivElement>(null);
 
     const { execute: executeCommand } = usePost(`/servers/${selectedContainerId}/action`);
@@ -28,6 +30,8 @@ export default function ServerCommand({ selectedContainerId, logs, isOpen, setIs
 
         try {
             await executeCommand({ action: "command", params: clean_command });
+            setCommandHistory((prev) => [...prev, clean_command]); // Ajouter à l'historique
+            setHistoryIndex(null);
             setCommand("");
         } catch (error) {
             console.error("Failed to execute command:", error);
@@ -87,6 +91,20 @@ export default function ServerCommand({ selectedContainerId, logs, isOpen, setIs
                                     if (e.key === "Enter") {
                                         e.preventDefault();
                                         handleCommandSubmit(e);
+                                    } else if (e.key === "ArrowUp") {
+                                        e.preventDefault();
+                                        setHistoryIndex((prev) => {
+                                            const newIndex = prev === null ? commandHistory.length - 1 : Math.max(prev - 1, 0);
+                                            setCommand(commandHistory[newIndex] || "");
+                                            return newIndex;
+                                        });
+                                    } else if (e.key === "ArrowDown") {
+                                        e.preventDefault();
+                                        setHistoryIndex((prev) => {
+                                            const newIndex = prev === null ? 0 : Math.min(prev + 1, commandHistory.length - 1);
+                                            setCommand(commandHistory[newIndex] || "");
+                                            return newIndex === commandHistory.length - 1 ? null : newIndex;
+                                        });
                                     }
                                 }}
                             />

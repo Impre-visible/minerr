@@ -25,10 +25,9 @@ import { useEffect, useState } from "react"
 import BetterSlider from "./better-slider"
 import { usePost } from "@/hooks/use-post"
 import { toast } from "sonner"
-import { parse } from "path"
 
 const formSchema = z.object({
-    name: z.string().min(1, "Server name is required").max(50, "Server name must be less than 50 characters"),
+    name: z.string().min(1, "Server name is required").max(50, "Server name must be less than 50 characters").regex(/^[a-zA-Z0-9][a-zA-Z0-9_.-]*$/, "Server name must start with a letter or number and can only contain letters, numbers, underscores, hyphens, and periods."),
     motd: z.string().optional().nullable(),
     max_players: z.number().int().min(1).max(10000).default(20), // Optional, default to 20 players
     memory: z.number().int().min(1024).max(16384).default(1024),
@@ -118,9 +117,9 @@ export default function CreateServer({ refreshServers }: { refreshServers: () =>
             refreshServers()
         }
         if (serverCreateError) {
-            alert(`Error creating server: ${serverCreateError.message}`)
+            console.error("Server creation error:", serverCreateError)
             toast.error(`Error`, {
-                description: serverCreateError.message || "An error occurred while creating the server.",
+                description: serverCreateError.message.split(':', 1)[1] || "An error occurred while creating the server.",
             })
         }
     }, [serverCreateData, serverCreateError])

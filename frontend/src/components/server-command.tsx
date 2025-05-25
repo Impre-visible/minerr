@@ -14,7 +14,7 @@ export default function ServerCommand({ selectedContainerId, logs, isOpen, setIs
 }) {
     const [command, setCommand] = useState("");
     const [commandHistory, setCommandHistory] = useState<string[]>([]);
-    const [historyIndex, setHistoryIndex] = useState<number | null>(null);
+    const [_historyIndex, setHistoryIndex] = useState<number | null>(null);
     const logContainerRef = useRef<HTMLDivElement>(null);
 
     const { execute: executeCommand } = usePost(`/servers/${selectedContainerId}/action`);

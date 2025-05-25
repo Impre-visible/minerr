@@ -90,7 +90,7 @@ function ServerItem({ server, refreshServers, handleLogClick }: { server: Server
             <CardHeader className="text-lg font-semibold flex flex-col gap-2">
                 <section className="flex justify-between items-center">
                     <span className="flex items-center gap-4">
-                        <span>{server.Name ? server.Name.slice(1) : "Name not found"}</span>
+                        <span>{server.Name ? server.Name.slice(1).split('--')[1] : "Name not found"}</span>
                         <span className="text-gray-300 text-sm">({server.Id.slice(0, 12)})</span>
                     </span>
                     <Tooltip>

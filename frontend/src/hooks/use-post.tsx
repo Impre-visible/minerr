@@ -2,7 +2,6 @@ import { env } from "@/environment"
 import { useState, useCallback } from "react"
 import useRefreshToken from "./use-refresh-token"
 import { toast } from "sonner"
-import { l } from "node_modules/react-router/dist/development/fog-of-war-D2zsXvum.d.mts"
 
 interface UsePostResult<T, P> {
     data: T | null

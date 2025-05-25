@@ -3,9 +3,15 @@ import dockerode from "dockerode";
 import { Card, CardContent, CardFooter, CardHeader } from "./ui/card";
 import { Tooltip, TooltipTrigger, TooltipContent } from "./ui/tooltip";
 import { Button } from "./ui/button";
-import { LogsIcon, PauseIcon, PlayIcon, RotateCcwIcon, Trash2Icon } from "lucide-react";
+import { Loader2, LogsIcon, PauseIcon, PlayIcon, RotateCcwIcon, Trash2Icon } from "lucide-react";
 import { usePost } from "@/hooks/use-post";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { env } from "@/environment";
+import { Dialog, DialogContent, DialogHeader } from "./ui/dialog";
+import { DialogTitle } from "@radix-ui/react-dialog";
+import ReactAnsi from "react-ansi";
+import { useTheme } from "./theme-provider";
+
 
 const formatMemory = (memoryAsMb: string): string => {
     const memoryInMb = parseInt(memoryAsMb, 10);
@@ -138,46 +144,111 @@ function ServerItem({ server, refreshServers, handleLogClick }: { server: docker
 }
 
 export default function ServersList({ servers, refreshServers }: { servers: dockerode.ContainerInspectInfo[], refreshServers: () => void }) {
+    const { theme } = useTheme();
+
+    const logContainerRef = useRef<HTMLDivElement>(null);
+
+    const [selectedContainerId, setSelectedContainerId] = useState<string | null>(null);
     const [logs, setLogs] = useState<string[]>([]);
-    const [socket, setSocket] = useState<WebSocket | null>(null);
+    const [isOpen, setIsOpen] = useState(false);
 
     const handleLogClick = (containerId: string) => {
-        const protocol = window.location.protocol === "https:" ? "wss" : "ws";
-        const newSocket = new WebSocket(`${protocol}://${window.location.host}/api/servers/logs?container_id=${containerId}`);
-        setSocket(newSocket);
+        setSelectedContainerId(containerId);
     };
 
     useEffect(() => {
-        if (socket) {
-            socket.onopen = () => {
-                console.log("WebSocket connection established");
-                socket.send(JSON.stringify({ type: "logs_init" }));
+        const container = logContainerRef.current;
+        if (container && (container.dataset.autoscroll === "true" || container.dataset.autoscroll === undefined)) {
+            container.scrollTop = container.scrollHeight;
+        }
+    }, [logs]);
+
+    const sanitizeLogs = (log: string) => {
+        return log
+            .replace(/\\"/g, '"')
+            .replace(/\\r/g, '')
+            .replace(/\\u001b/g, "\u001b")
+            .replace(/\r$/, "")
+            .replace(/\\t/g, "    ")
+            .replace(/^"/g, "");
+    }
+
+    useEffect(() => {
+        if (selectedContainerId) {
+            setIsOpen(true);
+            const eventSource = new EventSource(`${env.VITE_API_URL}/api/servers/${selectedContainerId}/logs?access_token=${localStorage.getItem("token")}`);
+            eventSource.onmessage = (event: { data: string }) => {
+                // eslint-disable-next-line
+                const log = event.data.slice(1, -1).split('","').map(line => sanitizeLogs(line));
+                setLogs((prevLogs) => Array.from(new Set([...prevLogs, ...log])));
             };
 
-            socket.onmessage = (event) => {
-                const data = JSON.parse(event.data);
-                if (data.type === "log") {
-                    setLogs(prevLogs => [...prevLogs, data.log]);
-                } else if (data.type === "logs_init") {
-                    setLogs(data.logs);
-                }
+            eventSource.onerror = (error) => {
+                console.log("EventSource error:", error);
+                eventSource.close();
             };
-
-            socket.onclose = () => {
-                console.log("WebSocket connection closed");
-            };
-
             return () => {
-                socket.close();
+                eventSource.close();
             };
         }
-    }, [socket]);
+    }, [selectedContainerId]);
+
+    useEffect(() => {
+        if (!isOpen) {
+            setSelectedContainerId(null);
+            setLogs([]);
+        }
+    }, [isOpen]);
+
 
     return (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-4 p-4">
             {servers.map((server, index) => (
                 <ServerItem key={index} refreshServers={refreshServers} server={server} handleLogClick={handleLogClick} />
             ))}
+            <Dialog open={isOpen} onOpenChange={setIsOpen}>
+                <DialogContent className="p-4 !w-[80vw] !max-w-[80vw]">
+                    {selectedContainerId ? (
+                        <>
+                            <DialogTitle className="text-xl font-bold">Logs for {selectedContainerId.slice(0, 12)}</DialogTitle>
+                            <div className="!w-[78vw] !max-w-[78vw]">
+                                <div
+                                    ref={logContainerRef}
+                                    className="w-full h-[80dvh] overflow-y-auto bg-neutral-100 dark:bg-neutral-900 color-neutral-900 dark:text-neutral-100 p-4 rounded-lg"
+                                    onScroll={(e) => {
+                                        const el = e.currentTarget;
+                                        const nearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 50;
+                                        el.dataset.autoscroll = nearBottom ? "true" : "false";
+                                    }}
+                                >
+                                    {
+                                        logs.length > 0 ? (
+                                            <ReactAnsi
+                                                bodyStyle={{ background: "transparent" }}
+                                                logStyle={{ color: theme === "dark" ? "#f5f5f5" : "#262626", fontFamily: "monospace", whiteSpace: "pre-wrap" }}
+                                                log={logs
+                                                    .map((line) =>
+                                                        line
+                                                    )
+                                                    .join("\n")}
+                                            />
+                                        ) : selectedContainerId ? (
+                                            <span className="flex items-center justify-center h-full text-gray-500">
+                                                <Loader2 className="animate-spin inline-block w-16 h-16 stroke-1" />
+                                            </span>
+                                        ) : (
+                                            <p className="text-sm text-gray-500">No logs available.</p>
+                                        )
+                                    }
+                                </div>
+                            </div>
+                        </>
+                    ) : (
+                        <p className="text-sm text-gray-500">Select a server to view logs.</p>
+                    )
+                    }
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

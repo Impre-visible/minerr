@@ -21,7 +21,10 @@ export class JwtMiddleware implements NestMiddleware {
         if (route) {
             return next(); // Bypass authentication for specified routes
         }
-        const token = req.headers.authorization?.split(' ')[1];
+        let token = req.headers.authorization?.split(' ')[1];
+        if (!token) {
+            token = req.query.access_token as string;
+        }
         if (!token) {
             return res.status(401).json({ message: 'No token provided' });
         }

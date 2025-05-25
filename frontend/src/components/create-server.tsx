@@ -1,6 +1,6 @@
 import { z } from "zod"
 import { ResponsiveDrawerDialog, ResponsiveDrawerDialogContent, ResponsiveDrawerDialogTrigger } from "./ui/responsive-dialog"
-import { Equal, Plus, Trash2 } from "lucide-react"
+import { Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
     Form,

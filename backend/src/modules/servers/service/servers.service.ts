@@ -1,5 +1,6 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import * as dockerode from 'dockerode';
+import { Readable } from 'stream';
 
 @Injectable()
 export class ServersService {
@@ -136,6 +137,32 @@ export class ServersService {
             data.success = false;
             data.message = `Failed to perform action ${actionDto.action} on server ${dockerId}: ${error.message}`;
             throw new InternalServerErrorException(data.message);
+        }
+    }
+
+    async getLogs(containerId: string, index: number): Promise<string[]> {
+        const container = this.docker.getContainer(containerId);
+
+        try {
+            const logBuffer = await container.logs({
+                follow: false, // Disable streaming for faster retrieval
+                stdout: true,
+                stderr: true,
+                tail: index > 0 ? 100 : 'all' as any,
+            });
+
+            const logs = logBuffer
+                .toString()
+                .split('\n')
+                .filter(line => line.trim() !== '');
+
+            if (logs.length === 0) {
+                throw new InternalServerErrorException(`No logs found for container ${containerId}`);
+            }
+
+            return logs;
+        } catch (error) {
+            throw new InternalServerErrorException(`Failed to retrieve logs for container ${containerId}: ${error.message}`);
         }
     }
 }

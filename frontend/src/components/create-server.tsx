@@ -25,9 +25,13 @@ import { useEffect, useState } from "react"
 import BetterSlider from "./better-slider"
 import { usePost } from "@/hooks/use-post"
 import { toast } from "sonner"
+import { parse } from "path"
 
 const formSchema = z.object({
-    memory: z.number().int().min(128).max(16384).default(1024),
+    name: z.string().min(1, "Server name is required").max(50, "Server name must be less than 50 characters"),
+    motd: z.string().optional().nullable(),
+    max_players: z.number().int().min(1).max(10000).default(20), // Optional, default to 20 players
+    memory: z.number().int().min(1024).max(16384).default(1024),
     port: z.number().int().min(1).max(65535).default(25565),
     version: z.string().default('1.20.1'), // This is used to specify the Minecraft version, e.g., "1.20.1" 
     type: z.string().default("VANILLA"),
@@ -49,10 +53,10 @@ const formSchema = z.object({
             })
         }
     }
-    if (data.memory < 128 || data.memory > 16384) {
+    if (data.memory < 1024 || data.memory > 16384) {
         ctx.addIssue({
             code: z.ZodIssueCode.custom,
-            message: "Memory must be between 128 MB and 16384 MB.",
+            message: "Memory must be between 1 and 16 GB (1024 to 16384 MB).",
         })
     }
     if (data.port < 1 || data.port > 65535) {
@@ -77,6 +81,9 @@ export default function CreateServer({ refreshServers }: { refreshServers: () =>
         resolver: zodResolver(formSchema),
         defaultValues: {
             type: "VANILLA",
+            name: "",
+            max_players: 20,
+            motd: "A Minecraft Server",
             port: 25565,
             version: "1.20.1",
             memory: 1024,
@@ -88,6 +95,9 @@ export default function CreateServer({ refreshServers }: { refreshServers: () =>
     const handleOpenChange = (open: boolean) => {
         form.reset({
             type: "VANILLA",
+            name: "",
+            max_players: 20,
+            motd: "A Minecraft Server",
             port: 25565,
             version: "1.20.1",
             memory: 1024,
@@ -133,40 +143,95 @@ export default function CreateServer({ refreshServers }: { refreshServers: () =>
                             console.log("Form Data:", data)
                             setIsOpen(false)
                         })}>
-                            <FormField
-                                name="type"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Server Type</FormLabel>
-                                        <Select onValueChange={(value) => {
-                                            field.onChange(value)
-                                            form.setValue("cf_api_key", "")
-                                            form.setValue("cf_modpack_url", "")
-                                        }} value={field.value}>
+                            <section className="w-full flex flex-row gap-2">
+                                <FormField
+                                    name="name"
+                                    render={({ field }) => (
+                                        <FormItem className="w-full">
+                                            <FormLabel>Server Name</FormLabel>
                                             <FormControl>
-                                                <SelectTrigger className="w-full">
-                                                    <SelectValue placeholder="Select server type" />
-                                                </SelectTrigger>
+                                                <Input
+                                                    type="text"
+                                                    placeholder="My Minecraft Server"
+                                                    {...field}
+                                                />
                                             </FormControl>
-                                            <SelectContent>
-                                                <SelectItem value="VANILLA">Vanilla</SelectItem>
-                                                <SelectItem value="AUTO_CURSEFORGE">CurseForge</SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    name="motd"
+                                    render={({ field }) => (
+                                        <FormItem className="w-full">
+                                            <FormLabel>MOTD</FormLabel>
+                                            <FormControl>
+                                                <Input
+                                                    type="text"
+                                                    placeholder="A Minecraft Server"
+                                                    {...field}
+                                                />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </section>
+                            <section className="w-full flex flex-row gap-2">
+                                <FormField
+                                    name="type"
+                                    render={({ field }) => (
+                                        <FormItem className="w-full">
+                                            <FormLabel>Server Type</FormLabel>
+                                            <Select onValueChange={(value) => {
+                                                field.onChange(value)
+                                                form.setValue("cf_api_key", "")
+                                                form.setValue("cf_modpack_url", "")
+                                            }} value={field.value}>
+                                                <FormControl>
+                                                    <SelectTrigger className="w-full">
+                                                        <SelectValue placeholder="Select server type" />
+                                                    </SelectTrigger>
+                                                </FormControl>
+                                                <SelectContent>
+                                                    <SelectItem value="VANILLA">Vanilla</SelectItem>
+                                                    <SelectItem value="AUTO_CURSEFORGE">CurseForge</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    name="version"
+                                    render={({ field }) => (
+                                        <FormItem className="w-full">
+                                            <FormLabel>Version</FormLabel>
+                                            <FormControl>
+                                                <Input
+                                                    type="text"
+                                                    placeholder="Minecraft Version (e.g., 1.20.1)"
+                                                    {...field}
+                                                />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </section>
                             <FormField
-                                name="version"
+                                name="max_players"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Version</FormLabel>
+                                        <FormLabel>Max Players</FormLabel>
                                         <FormControl>
                                             <Input
-                                                type="text"
-                                                placeholder="Minecraft Version (e.g., 1.20.1)"
-                                                {...field}
+                                                type="number"
+                                                placeholder="Max Players"
+                                                value={field.value}
+                                                onChange={(e) => {
+                                                    field.onChange(Math.max(1, Math.min(10000, parseInt(e.target.value, 10) || 20))) // Ensure value is between 1 and 10000
+                                                }}
                                             />
                                         </FormControl>
                                         <FormMessage />

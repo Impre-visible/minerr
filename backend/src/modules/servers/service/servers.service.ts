@@ -78,8 +78,11 @@ export class ServersService {
 
         let envs: string[] = []
         envs.push('EULA=TRUE');
+        envs.push(`SERVER_NAME=${createServerDto.name}`);
+        envs.push(`MOTD=${createServerDto.motd}`);
         envs.push(`TYPE=${createServerDto.type}`);
         envs.push(`VERSION=${createServerDto.version}`);
+        envs.push(`MAX_PLAYERS=${createServerDto.max_players}`);
         envs.push(`MEMORY=${createServerDto.memory}M`);
         envs.push(`FETCH_TLS_HANDSHAKE_TIMEOUT=PT120S`); // 120 seconds timeout for TLS handshake
         envs.push(`ENABLE_AUTOPAUSE=true`);
@@ -90,7 +93,7 @@ export class ServersService {
         }
 
         try {
-            let name = 'minecraft-server-' + Date.now();
+            let name = 'minecraft-server--' + createServerDto.name + '--' + Date.now();
             const container = await this.docker.createContainer({
                 Image: 'docker.io/' + imageName,
                 name,

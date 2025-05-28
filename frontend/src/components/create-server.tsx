@@ -35,7 +35,7 @@ const formSchema = z.object({
     cf_api_key: z.string().optional().nullable(),
     cf_modpack_url: z.string().optional().nullable()
 }).superRefine((data, ctx) => {
-    if (data.type === "AUTO_CURSEFORGE") {
+    if (data.type?.startsWith("AUTO_CURSEFORGE")) {
         if (!data.cf_api_key || !data.cf_modpack_url) {
             ctx.addIssue({
                 code: z.ZodIssueCode.custom,
@@ -111,7 +111,7 @@ export default function CreateServer({ refreshServers }: { refreshServers: () =>
     useEffect(() => {
         if (serverCreateData) {
             setIsOpen(false)
-            refreshServers()
+            if (refreshServers) refreshServers()
         }
     }, [serverCreateData])
 
@@ -190,7 +190,8 @@ export default function CreateServer({ refreshServers }: { refreshServers: () =>
                                                 </FormControl>
                                                 <SelectContent>
                                                     <SelectItem value="VANILLA">Vanilla</SelectItem>
-                                                    <SelectItem value="AUTO_CURSEFORGE">CurseForge</SelectItem>
+                                                    <SelectItem value="AUTO_CURSEFORGE (Forge)">CurseForge (Forge)</SelectItem>
+                                                    <SelectItem value="AUTO_CURSEFORGE (NeoForge)">CurseForge (NeoForge)</SelectItem>
                                                 </SelectContent>
                                             </Select>
                                             {fieldState.error && <FormMessage />}
@@ -279,7 +280,7 @@ export default function CreateServer({ refreshServers }: { refreshServers: () =>
                                     </FormItem>
                                 )}
                             />
-                            {form.watch("type") === "AUTO_CURSEFORGE" && (
+                            {form.watch("type")?.startsWith("AUTO_CURSEFORGE") && (
                                 <section className="flex flex-row items-center gap-4 w-full">
                                     <FormField
                                         name="cf_api_key"

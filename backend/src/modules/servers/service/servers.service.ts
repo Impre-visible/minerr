@@ -33,6 +33,17 @@ export class ServersService {
         }
     }
 
+    private typeToTypeAndModPlatform(type: string): { type: string, mod_platform: string } {
+        if (type.startsWith("AUTO_CURSEFORGE")) {
+            const parts = type.split(' ');
+            if (parts.length > 1) {
+                return { type: parts[1].replace('(', '').replace(')', ''), mod_platform: 'AUTO_CURSEFORGE' }; // Extract mod platform from type
+            }
+            return { type: 'Forge', mod_platform: 'AUTO_CURSEFORGE' }; // Default to Forge if no specific type is provided
+        }
+        return { type: type, mod_platform: '' }; // For vanilla or other types, just return the type
+    }
+
     private versionToTag(version: string): string {
         const versionParts = version.split('.');
         if (versionParts.length >= 2) {
@@ -81,14 +92,21 @@ export class ServersService {
         envs.push('EULA=TRUE');
         envs.push(`SERVER_NAME=${createServerDto.name}`);
         envs.push(`MOTD=${createServerDto.motd}`);
-        envs.push(`TYPE=${createServerDto.type}`);
+
+        let { type, mod_platform } = this.typeToTypeAndModPlatform(createServerDto.type);
+        if (type === 'AUTO_CURSEFORGE') {
+            envs.push(`TYPE=${type}`);
+            envs.push(`MOD_PLATFORM=${mod_platform}`);
+        } else {
+            envs.push(`TYPE=${type}`); // For vanilla or other types, just set the type
+        }
         envs.push(`VERSION=${createServerDto.version}`);
         envs.push(`MAX_PLAYERS=${createServerDto.max_players}`);
         envs.push(`MEMORY=${createServerDto.memory}M`);
         envs.push(`FETCH_TLS_HANDSHAKE_TIMEOUT=PT120S`); // 120 seconds timeout for TLS handshake
         envs.push(`ENABLE_AUTOPAUSE=true`);
 
-        if (createServerDto.type === 'AUTO_CURSEFORGE') {
+        if (createServerDto.type?.startsWith("AUTO_CURSEFORGE")) {
             envs.push(`CF_API_KEY=${createServerDto.cf_api_key}`);
             envs.push(`CF_PAGE_URL=${createServerDto.cf_modpack_url}`);
         }

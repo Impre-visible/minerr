@@ -53,7 +53,8 @@ function ServerItem({ server, refreshServers, handleLogClick }: { server: Server
 
     const types: Record<string, string> = {
         "VANILLA": "Vanilla",
-        "AUTO_CURSEFORGE": "CurseForge",
+        "AUTO_CURSEFORGE (Forge)": "CurseForge (Forge)",
+        "AUTO_CURSEFORGE (NeoForge)": "CurseForge (NeoForge)",
     };
 
     const getEnvValue = (env: string, defaultValue: string) => {
